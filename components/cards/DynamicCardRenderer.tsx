@@ -325,15 +325,18 @@ function KVCacheCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
+  const current = data.current as number;
+  const baseline = data.baseline as number;
+  const limit = data.limit as number;
   const trend = data.trend as number[];
   const chartData = trend.map((v, i) => ({ t: i, gb: v }));
 
   return (
     <CardShell title={title} accent="red">
       <div className="mb-3 flex items-baseline gap-3">
-        <span className="text-2xl font-semibold text-dt-red">{data.current} GB</span>
+        <span className="text-2xl font-semibold text-dt-red">{current} GB</span>
         <span className="text-[12px] text-dt-text-muted">
-          baseline {data.baseline} GB · limit {data.limit} GB
+          baseline {baseline} GB · limit {limit} GB
         </span>
         <span className="rounded-full bg-dt-red/10 px-2 py-0.5 text-[10px] font-medium text-dt-red">
           +340% growth
@@ -476,24 +479,31 @@ function ApprovalCard({
   onApprove?: () => void;
   onReject?: () => void;
 }) {
+  const action = data.action as string;
+  const from = data.from as string | undefined;
+  const to = data.to as string | undefined;
+  const namespace = data.namespace as string | undefined;
+  const nodePool = data.nodePool as string | undefined;
+  const expectedImprovement = data.expectedImprovement as string;
+  const risk = data.risk as string;
+  const cost = data.cost as string | undefined;
+
   return (
     <CardShell title={title} accent="green">
       <div className="mb-4 rounded-md bg-dt-surface-3 p-3">
-        <div className="mb-2 text-[12px] font-medium text-dt-text">
-          {data.action as string}
-        </div>
-        {data.from && data.to && (
+        <div className="mb-2 text-[12px] font-medium text-dt-text">{action}</div>
+        {from && to ? (
           <div className="flex items-center gap-2 text-[12px] text-dt-text-muted">
-            <span className="rounded bg-dt-surface-2 px-2 py-1">{data.from as string}</span>
+            <span className="rounded bg-dt-surface-2 px-2 py-1">{from}</span>
             <ArrowRight className="h-3.5 w-3.5 text-dt-text-dim" />
-            <span className="rounded bg-dt-surface-2 px-2 py-1">{data.to as string}</span>
+            <span className="rounded bg-dt-surface-2 px-2 py-1">{to}</span>
           </div>
-        )}
-        {data.namespace && (
+        ) : null}
+        {namespace ? (
           <div className="mt-2 text-[11px] text-dt-text-dim">
-            Namespace: {data.namespace as string} · Pool: {data.nodePool as string}
+            Namespace: {namespace} · Pool: {nodePool}
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-3">
@@ -501,19 +511,19 @@ function ApprovalCard({
           <div className="text-[10px] text-dt-text-dim">Expected Improvement</div>
           <div className="flex items-center gap-1 text-[13px] font-medium text-dt-green">
             <TrendingUp className="h-3.5 w-3.5" />
-            {data.expectedImprovement as string}
+            {expectedImprovement}
           </div>
         </div>
         <div className="rounded-md bg-dt-surface-3 p-2.5">
           <div className="text-[10px] text-dt-text-dim">Risk Level</div>
-          <div className="text-[13px] font-medium text-dt-green">{data.risk as string}</div>
+          <div className="text-[13px] font-medium text-dt-green">{risk}</div>
         </div>
-        {data.cost && (
+        {cost ? (
           <div className="col-span-2 rounded-md bg-dt-surface-3 p-2.5">
             <div className="text-[10px] text-dt-text-dim">Estimated Cost</div>
-            <div className="text-[13px] font-medium text-dt-text">{data.cost as string}</div>
+            <div className="text-[13px] font-medium text-dt-text">{cost}</div>
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="flex gap-2">

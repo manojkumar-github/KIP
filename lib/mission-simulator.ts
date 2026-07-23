@@ -758,7 +758,7 @@ export async function runMissionSimulation(
   onUpdate: (state: MissionState) => void,
   initialState: MissionState
 ): Promise<MissionState> {
-  let state = { ...initialState, status: "running" as const };
+  let state: MissionState = { ...initialState, status: "running" };
   onUpdate(state);
 
   const steps = getSimulationSteps(mission);
