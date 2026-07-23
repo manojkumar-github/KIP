@@ -331,9 +331,11 @@ function KVCacheCard({
   return (
     <CardShell title={title} accent="red">
       <div className="mb-3 flex items-baseline gap-3">
-        <span className="text-2xl font-semibold text-dt-red">{data.current} GB</span>
+        <span className="text-2xl font-semibold text-dt-red">
+          {data.current as React.ReactNode} GB
+        </span>
         <span className="text-[12px] text-dt-text-muted">
-          baseline {data.baseline} GB · limit {data.limit} GB
+          baseline {data.baseline as React.ReactNode} GB · limit {data.limit as React.ReactNode} GB
         </span>
         <span className="rounded-full bg-dt-red/10 px-2 py-0.5 text-[10px] font-medium text-dt-red">
           +340% growth
@@ -446,11 +448,11 @@ function CostAnalysisCard({
       <div className="mb-4 flex items-baseline gap-2">
         <DollarSign className="h-5 w-5 text-dt-green" />
         <span className="text-2xl font-semibold text-dt-text">
-          ${(data.monthly as number).toLocaleString()}
+          ${((data.monthly as number) || 0).toLocaleString()}
         </span>
         <span className="text-[12px] text-dt-text-muted">/month</span>
         <span className="ml-auto rounded-full bg-dt-green/10 px-2 py-0.5 text-[10px] text-dt-green">
-          {data.savings as string}
+          {data.savings as React.ReactNode}
         </span>
       </div>
       <div className="space-y-2">
@@ -480,18 +482,18 @@ function ApprovalCard({
     <CardShell title={title} accent="green">
       <div className="mb-4 rounded-md bg-dt-surface-3 p-3">
         <div className="mb-2 text-[12px] font-medium text-dt-text">
-          {data.action as string}
+          {data.action as React.ReactNode}
         </div>
         {data.from && data.to && (
           <div className="flex items-center gap-2 text-[12px] text-dt-text-muted">
-            <span className="rounded bg-dt-surface-2 px-2 py-1">{data.from as string}</span>
+            <span className="rounded bg-dt-surface-2 px-2 py-1">{data.from as React.ReactNode}</span>
             <ArrowRight className="h-3.5 w-3.5 text-dt-text-dim" />
-            <span className="rounded bg-dt-surface-2 px-2 py-1">{data.to as string}</span>
+            <span className="rounded bg-dt-surface-2 px-2 py-1">{data.to as React.ReactNode}</span>
           </div>
         )}
         {data.namespace && (
           <div className="mt-2 text-[11px] text-dt-text-dim">
-            Namespace: {data.namespace as string} · Pool: {data.nodePool as string}
+            Namespace: {data.namespace as React.ReactNode} · Pool: {data.nodePool as React.ReactNode}
           </div>
         )}
       </div>
@@ -501,17 +503,17 @@ function ApprovalCard({
           <div className="text-[10px] text-dt-text-dim">Expected Improvement</div>
           <div className="flex items-center gap-1 text-[13px] font-medium text-dt-green">
             <TrendingUp className="h-3.5 w-3.5" />
-            {data.expectedImprovement as string}
+            {data.expectedImprovement as React.ReactNode}
           </div>
         </div>
         <div className="rounded-md bg-dt-surface-3 p-2.5">
           <div className="text-[10px] text-dt-text-dim">Risk Level</div>
-          <div className="text-[13px] font-medium text-dt-green">{data.risk as string}</div>
+          <div className="text-[13px] font-medium text-dt-green">{data.risk as React.ReactNode}</div>
         </div>
         {data.cost && (
           <div className="col-span-2 rounded-md bg-dt-surface-3 p-2.5">
             <div className="text-[10px] text-dt-text-dim">Estimated Cost</div>
-            <div className="text-[13px] font-medium text-dt-text">{data.cost as string}</div>
+            <div className="text-[13px] font-medium text-dt-text">{data.cost as React.ReactNode}</div>
           </div>
         )}
       </div>
@@ -557,10 +559,10 @@ function RecommendationCard({
       </ul>
       <div className="flex gap-4 text-[11px]">
         <span className="text-dt-green">
-          Impact: {data.impact as string}
+          Impact: {data.impact as React.ReactNode}
         </span>
         <span className="text-dt-text-dim">
-          Risk: {data.risk as string}
+          Risk: {data.risk as React.ReactNode}
         </span>
       </div>
     </CardShell>
@@ -573,8 +575,8 @@ function StatusBadgesCard({ data }: { data: Record<string, unknown> }) {
   return (
     <CardShell>
       <div className="mb-2 flex items-center gap-2">
-        <span className="text-[14px] font-semibold text-dt-text">{data.name as string}</span>
-        <span className="text-[11px] text-dt-text-dim">{data.type as string}</span>
+        <span className="text-[14px] font-semibold text-dt-text">{data.name as React.ReactNode}</span>
+        <span className="text-[11px] text-dt-text-dim">{data.type as React.ReactNode}</span>
       </div>
       <div className="flex flex-wrap gap-2">
         {badges.map((b) => (
