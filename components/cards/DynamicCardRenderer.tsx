@@ -325,15 +325,18 @@ function KVCacheCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
+  const current = data.current as React.ReactNode;
+  const baseline = data.baseline as React.ReactNode;
+  const limit = data.limit as React.ReactNode;
   const trend = data.trend as number[];
   const chartData = trend.map((v, i) => ({ t: i, gb: v }));
 
   return (
     <CardShell title={title} accent="red">
       <div className="mb-3 flex items-baseline gap-3">
-        <span className="text-2xl font-semibold text-dt-red">{data.current} GB</span>
+        <span className="text-2xl font-semibold text-dt-red">{current} GB</span>
         <span className="text-[12px] text-dt-text-muted">
-          baseline {data.baseline} GB · limit {data.limit} GB
+          baseline {baseline} GB · limit {limit} GB
         </span>
         <span className="rounded-full bg-dt-red/10 px-2 py-0.5 text-[10px] font-medium text-dt-red">
           +340% growth
@@ -439,6 +442,8 @@ function CostAnalysisCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
+  const monthly = data.monthly as React.ReactNode;
+  const savings = data.savings as React.ReactNode;
   const breakdown = data.breakdown as Array<{ label: string; amount: number }>;
 
   return (
@@ -446,11 +451,11 @@ function CostAnalysisCard({
       <div className="mb-4 flex items-baseline gap-2">
         <DollarSign className="h-5 w-5 text-dt-green" />
         <span className="text-2xl font-semibold text-dt-text">
-          ${(data.monthly as number).toLocaleString()}
+          ${String(monthly)}
         </span>
         <span className="text-[12px] text-dt-text-muted">/month</span>
         <span className="ml-auto rounded-full bg-dt-green/10 px-2 py-0.5 text-[10px] text-dt-green">
-          {data.savings as string}
+          {savings}
         </span>
       </div>
       <div className="space-y-2">
@@ -476,17 +481,20 @@ function ApprovalCard({
   onApprove?: () => void;
   onReject?: () => void;
 }) {
+  const action = data.action as React.ReactNode;
   const from = data.from as string | undefined;
   const to = data.to as string | undefined;
   const namespace = data.namespace as string | undefined;
   const nodePool = data.nodePool as string | undefined;
+  const expectedImprovement = data.expectedImprovement as React.ReactNode;
+  const risk = data.risk as React.ReactNode;
   const cost = data.cost as string | undefined;
 
   return (
     <CardShell title={title} accent="green">
       <div className="mb-4 rounded-md bg-dt-surface-3 p-3">
         <div className="mb-2 text-[12px] font-medium text-dt-text">
-          {data.action as string}
+          {action}
         </div>
         {from != null && to != null ? (
           <div className="flex items-center gap-2 text-[12px] text-dt-text-muted">
@@ -507,12 +515,12 @@ function ApprovalCard({
           <div className="text-[10px] text-dt-text-dim">Expected Improvement</div>
           <div className="flex items-center gap-1 text-[13px] font-medium text-dt-green">
             <TrendingUp className="h-3.5 w-3.5" />
-            {data.expectedImprovement as string}
+            {expectedImprovement}
           </div>
         </div>
         <div className="rounded-md bg-dt-surface-3 p-2.5">
           <div className="text-[10px] text-dt-text-dim">Risk Level</div>
-          <div className="text-[13px] font-medium text-dt-green">{data.risk as string}</div>
+          <div className="text-[13px] font-medium text-dt-green">{risk}</div>
         </div>
         {cost != null ? (
           <div className="col-span-2 rounded-md bg-dt-surface-3 p-2.5">
@@ -550,6 +558,8 @@ function RecommendationCard({
   title?: string;
 }) {
   const actions = data.actions as string[];
+  const impact = data.impact as React.ReactNode;
+  const risk = data.risk as React.ReactNode;
 
   return (
     <CardShell title={title} accent="green">
@@ -563,10 +573,10 @@ function RecommendationCard({
       </ul>
       <div className="flex gap-4 text-[11px]">
         <span className="text-dt-green">
-          Impact: {data.impact as string}
+          Impact: {impact}
         </span>
         <span className="text-dt-text-dim">
-          Risk: {data.risk as string}
+          Risk: {risk}
         </span>
       </div>
     </CardShell>
@@ -574,13 +584,15 @@ function RecommendationCard({
 }
 
 function StatusBadgesCard({ data }: { data: Record<string, unknown> }) {
+  const name = data.name as React.ReactNode;
+  const type = data.type as React.ReactNode;
   const badges = data.badges as Array<{ label: string; status: string }>;
 
   return (
     <CardShell>
       <div className="mb-2 flex items-center gap-2">
-        <span className="text-[14px] font-semibold text-dt-text">{data.name as string}</span>
-        <span className="text-[11px] text-dt-text-dim">{data.type as string}</span>
+        <span className="text-[14px] font-semibold text-dt-text">{name}</span>
+        <span className="text-[11px] text-dt-text-dim">{type}</span>
       </div>
       <div className="flex flex-wrap gap-2">
         {badges.map((b) => (
