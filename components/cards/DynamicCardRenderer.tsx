@@ -231,21 +231,23 @@ function GPUFleetCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
+  const items: Array<{ label: string; value: React.ReactNode; color: string }> = [
+    { label: "Total GPUs", value: data.total as React.ReactNode, color: "text-dt-text" },
+    { label: "Critical", value: data.critical as React.ReactNode, color: "text-dt-red" },
+    { label: "Idle", value: data.idle as React.ReactNode, color: "text-dt-amber" },
+    { label: "Avg Utilization", value: `${data.avgUtil}%`, color: "text-dt-accent" },
+    { label: "Healthy", value: data.healthy as React.ReactNode, color: "text-dt-green" },
+    {
+      label: "Cost Waste",
+      value: `$${((data.costWaste as number) || 0).toLocaleString()}/mo`,
+      color: "text-dt-amber",
+    },
+  ];
+
   return (
     <CardShell title={title}>
       <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: "Total GPUs", value: data.total, color: "text-dt-text" },
-          { label: "Critical", value: data.critical, color: "text-dt-red" },
-          { label: "Idle", value: data.idle, color: "text-dt-amber" },
-          { label: "Avg Utilization", value: `${data.avgUtil}%`, color: "text-dt-accent" },
-          { label: "Healthy", value: data.healthy, color: "text-dt-green" },
-          {
-            label: "Cost Waste",
-            value: `$${(data.costWaste as number).toLocaleString()}/mo`,
-            color: "text-dt-amber",
-          },
-        ].map((item) => (
+        {items.map((item) => (
           <div key={item.label} className="rounded-md bg-dt-surface-3 p-2.5">
             <div className="text-[10px] text-dt-text-dim">{item.label}</div>
             <div className={cn("text-[16px] font-semibold", item.color)}>
