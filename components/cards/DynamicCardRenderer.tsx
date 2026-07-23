@@ -130,9 +130,9 @@ function RootCauseCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
-  const cause = data.cause as string;
-  const chain = data.chain as string[];
-  const confidence = data.confidence as number;
+  const cause = (data.cause ?? "") as string;
+  const chain = (data.chain ?? []) as string[];
+  const confidence = (data.confidence ?? 0) as number;
 
   return (
     <CardShell title={title} accent="red">
@@ -171,7 +171,7 @@ function GPUHeatmapCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
-  const nodes = data.nodes as Array<{
+  const nodes = (data.nodes ?? []) as Array<{
     id: string;
     util: number;
     memory: number;
@@ -232,14 +232,14 @@ function GPUFleetCard({
   title?: string;
 }) {
   const items: Array<{ label: string; value: React.ReactNode; color: string }> = [
-    { label: "Total GPUs", value: data.total as React.ReactNode, color: "text-dt-text" },
-    { label: "Critical", value: data.critical as React.ReactNode, color: "text-dt-red" },
-    { label: "Idle", value: data.idle as React.ReactNode, color: "text-dt-amber" },
-    { label: "Avg Utilization", value: `${data.avgUtil}%`, color: "text-dt-accent" },
-    { label: "Healthy", value: data.healthy as React.ReactNode, color: "text-dt-green" },
+    { label: "Total GPUs", value: (data.total as React.ReactNode) ?? 0, color: "text-dt-text" },
+    { label: "Critical", value: (data.critical as React.ReactNode) ?? 0, color: "text-dt-red" },
+    { label: "Idle", value: (data.idle as React.ReactNode) ?? 0, color: "text-dt-amber" },
+    { label: "Avg Utilization", value: `${(data.avgUtil as number) ?? 0}%`, color: "text-dt-accent" },
+    { label: "Healthy", value: (data.healthy as React.ReactNode) ?? 0, color: "text-dt-green" },
     {
       label: "Cost Waste",
-      value: `$${((data.costWaste as number) || 0).toLocaleString()}/mo`,
+      value: `$${(((data.costWaste as number) ?? 0).toLocaleString())}}/mo`,
       color: "text-dt-amber",
     },
   ];
@@ -273,7 +273,7 @@ function UtilizationCard({
     <CardShell title={title}>
       <div className="space-y-3">
         {metrics.map((m) => {
-          const d = data[m] as { usage: number; requests: number; limits: number };
+          const d = (data[m] ?? { usage: 0, requests: 0, limits: 0 }) as { usage: number; requests: number; limits: number };
           return (
             <div key={m}>
               <div className="mb-1 flex items-center justify-between text-[11px]">
@@ -325,17 +325,17 @@ function KVCacheCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
-  const trend = data.trend as number[];
+  const trend = (data.trend ?? []) as number[];
   const chartData = trend.map((v, i) => ({ t: i, gb: v }));
 
   return (
     <CardShell title={title} accent="red">
       <div className="mb-3 flex items-baseline gap-3">
         <span className="text-2xl font-semibold text-dt-red">
-          {data.current as React.ReactNode} GB
+          {(data.current as React.ReactNode) ?? 0} GB
         </span>
         <span className="text-[12px] text-dt-text-muted">
-          baseline {data.baseline as React.ReactNode} GB · limit {data.limit as React.ReactNode} GB
+          baseline {(data.baseline as React.ReactNode) ?? 0} GB · limit {(data.limit as React.ReactNode) ?? 0} GB
         </span>
         <span className="rounded-full bg-dt-red/10 px-2 py-0.5 text-[10px] font-medium text-dt-red">
           +340% growth
@@ -378,7 +378,7 @@ function CapacityComparisonCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
-  const configs = data.configs as Array<{
+  const configs = (data.configs ?? []) as Array<{
     name: string;
     vram: number;
     throughput: string;
@@ -441,18 +441,18 @@ function CostAnalysisCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
-  const breakdown = data.breakdown as Array<{ label: string; amount: number }>;
+  const breakdown = (data.breakdown ?? []) as Array<{ label: string; amount: number }>;
 
   return (
     <CardShell title={title}>
       <div className="mb-4 flex items-baseline gap-2">
         <DollarSign className="h-5 w-5 text-dt-green" />
         <span className="text-2xl font-semibold text-dt-text">
-          ${((data.monthly as number) || 0).toLocaleString()}
+          ${(((data.monthly as number) ?? 0).toLocaleString())}
         </span>
         <span className="text-[12px] text-dt-text-muted">/month</span>
         <span className="ml-auto rounded-full bg-dt-green/10 px-2 py-0.5 text-[10px] text-dt-green">
-          {data.savings as React.ReactNode}
+          {((data.savings as React.ReactNode) ?? "")}
         </span>
       </div>
       <div className="space-y-2">
@@ -478,22 +478,27 @@ function ApprovalCard({
   onApprove?: () => void;
   onReject?: () => void;
 }) {
+  const from = (data.from as React.ReactNode) ?? null;
+  const to = (data.to as React.ReactNode) ?? null;
+  const namespace = (data.namespace as React.ReactNode) ?? null;
+  const nodePool = (data.nodePool as React.ReactNode) ?? null;
+
   return (
     <CardShell title={title} accent="green">
       <div className="mb-4 rounded-md bg-dt-surface-3 p-3">
         <div className="mb-2 text-[12px] font-medium text-dt-text">
-          {data.action as React.ReactNode}
+          {((data.action as React.ReactNode) ?? "")}
         </div>
-        {data.from && data.to && (
+        {from && to && (
           <div className="flex items-center gap-2 text-[12px] text-dt-text-muted">
-            <span className="rounded bg-dt-surface-2 px-2 py-1">{data.from as React.ReactNode}</span>
+            <span className="rounded bg-dt-surface-2 px-2 py-1">{from}</span>
             <ArrowRight className="h-3.5 w-3.5 text-dt-text-dim" />
-            <span className="rounded bg-dt-surface-2 px-2 py-1">{data.to as React.ReactNode}</span>
+            <span className="rounded bg-dt-surface-2 px-2 py-1">{to}</span>
           </div>
         )}
-        {data.namespace && (
+        {namespace && (
           <div className="mt-2 text-[11px] text-dt-text-dim">
-            Namespace: {data.namespace as React.ReactNode} · Pool: {data.nodePool as React.ReactNode}
+            Namespace: {namespace} · Pool: {nodePool ?? ""}
           </div>
         )}
       </div>
@@ -503,17 +508,17 @@ function ApprovalCard({
           <div className="text-[10px] text-dt-text-dim">Expected Improvement</div>
           <div className="flex items-center gap-1 text-[13px] font-medium text-dt-green">
             <TrendingUp className="h-3.5 w-3.5" />
-            {data.expectedImprovement as React.ReactNode}
+            {((data.expectedImprovement as React.ReactNode) ?? "")}
           </div>
         </div>
         <div className="rounded-md bg-dt-surface-3 p-2.5">
           <div className="text-[10px] text-dt-text-dim">Risk Level</div>
-          <div className="text-[13px] font-medium text-dt-green">{data.risk as React.ReactNode}</div>
+          <div className="text-[13px] font-medium text-dt-green">{((data.risk as React.ReactNode) ?? "")}</div>
         </div>
         {data.cost && (
           <div className="col-span-2 rounded-md bg-dt-surface-3 p-2.5">
             <div className="text-[10px] text-dt-text-dim">Estimated Cost</div>
-            <div className="text-[13px] font-medium text-dt-text">{data.cost as React.ReactNode}</div>
+            <div className="text-[13px] font-medium text-dt-text">{((data.cost as React.ReactNode) ?? "")}</div>
           </div>
         )}
       </div>
@@ -545,7 +550,7 @@ function RecommendationCard({
   data: Record<string, unknown>;
   title?: string;
 }) {
-  const actions = data.actions as string[];
+  const actions = (data.actions ?? []) as string[];
 
   return (
     <CardShell title={title} accent="green">
@@ -559,10 +564,10 @@ function RecommendationCard({
       </ul>
       <div className="flex gap-4 text-[11px]">
         <span className="text-dt-green">
-          Impact: {data.impact as React.ReactNode}
+          Impact: {((data.impact as React.ReactNode) ?? "")}
         </span>
         <span className="text-dt-text-dim">
-          Risk: {data.risk as React.ReactNode}
+          Risk: {((data.risk as React.ReactNode) ?? "")}
         </span>
       </div>
     </CardShell>
@@ -570,13 +575,13 @@ function RecommendationCard({
 }
 
 function StatusBadgesCard({ data }: { data: Record<string, unknown> }) {
-  const badges = data.badges as Array<{ label: string; status: string }>;
+  const badges = (data.badges ?? []) as Array<{ label: string; status: string }>;
 
   return (
     <CardShell>
       <div className="mb-2 flex items-center gap-2">
-        <span className="text-[14px] font-semibold text-dt-text">{data.name as React.ReactNode}</span>
-        <span className="text-[11px] text-dt-text-dim">{data.type as React.ReactNode}</span>
+        <span className="text-[14px] font-semibold text-dt-text">{((data.name as React.ReactNode) ?? "")}</span>
+        <span className="text-[11px] text-dt-text-dim">{((data.type as React.ReactNode) ?? "")}</span>
       </div>
       <div className="flex flex-wrap gap-2">
         {badges.map((b) => (
