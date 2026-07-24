@@ -1,78 +1,80 @@
-# KIP Backend Framework
+# KIP Backend (Python)
 
-Pluggable backend for onboarding company K8s / GPU / LLM stacks into KIP.
+Pluggable FastAPI backend for onboarding company K8s / GPU / LLM stacks into KIP.
 
-Inspired by **k8sgpt** (provider/analyzer plugins), **Backstage** (provider registry), and **OpenTelemetry Collector** (capability pipelines). Missions never call Prometheus, DCGM, or Kubernetes directly — they call **capability interfaces**. You bring your own providers.
+Inspired by **k8sgpt** (provider plugins), **Backstage** (provider registry), and **OpenTelemetry Collector** (capability pipelines). Missions call **capability interfaces** only — never Prometheus/DCGM/Kubernetes directly.
+
+## Quick start
+
+```bash
+cd backend
+# Prefer Python 3.11+
+python3.11 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn kip.main:app --reload --port 8000
+```
+
+From the repo root (separate terminal):
+
+```bash
+npm run dev
+```
+
+Next.js proxies `/api/*` → `http://127.0.0.1:8000` (see `next.config.ts`).
+
+Or: `npm run dev:api` for the API alone.
 
 ## Architecture
 
 ```
-UI ──SSE──► Next.js API ──► MissionOrchestrator ──► Capability interfaces
-                                                         │
-                                              ProviderRegistry.resolve(StackManifest)
-                                                         │
-                              ┌──────────────┬───────────┴────────────┐
-                           demo          kubernetes              your-provider
+UI ──/api──► Next rewrite ──► FastAPI ──► MissionOrchestrator
+                                              │
+                                   ProviderRegistry.resolve(StackManifest)
+                                              │
+                         demo · kubernetes · your BYO providers
 ```
-
-## Quick start (demo stack)
-
-The default stack `demo-prod-gpu-west-2` uses the built-in `demo` provider for every capability. No cluster required.
-
-```bash
-npm run dev
-# POST /api/missions { "missionId": "rag-incident", "stackId": "demo-prod-gpu-west-2" }
-# GET  /api/missions/<runId>/stream   (SSE MissionState)
-```
-
-Stack manifests live in [`stacks/`](../stacks/). See [`demo.yaml`](../stacks/demo.yaml).
 
 ## Onboard your infrastructure (BYO)
 
 ### 1. Implement a capability
 
-```ts
-import type { GpuTelemetry, GpuNodeMetrics } from "@/backend/src/capabilities/gpu";
+```python
+from kip.capabilities import GpuTelemetry, GpuNodeMetrics
 
-export class AcmeDcgmProvider implements GpuTelemetry {
-  readonly name = "acme-dcgm";
+class AcmeDcgmProvider:
+    name = "acme-dcgm"
 
-  constructor(private config: { prometheusUrl: string }) {}
+    def __init__(self, prometheus_url: str):
+        self.prometheus_url = prometheus_url
 
-  async getFleetMetrics(): Promise<GpuNodeMetrics[]> {
-    // query your DCGM / Prometheus exporter
-    return [];
-  }
+    async def get_fleet_metrics(self) -> list[GpuNodeMetrics]:
+        # query your DCGM / Prometheus exporter
+        return []
 
-  async getNodeMetrics(nodeId: string) {
-    return null;
-  }
+    async def get_node_metrics(self, node_id: str):
+        return None
 
-  async estimateModelRequirements({ modelParamsB, concurrentUsers }) {
-    return {
-      modelSize: `${modelParamsB}B`,
-      vramGb: modelParamsB * 2,
-      concurrentUsers,
-      recommendedGpus: 4,
-      gpuType: "H100",
-    };
-  }
-}
+    async def estimate_model_requirements(self, *, model_params_b: float, concurrent_users: int):
+        ...
 ```
 
 ### 2. Register the provider
 
-In [`providers/register-builtins.ts`](./src/providers/register-builtins.ts) (or your own bootstrap module):
+In `kip/providers/register_builtins.py` (or your bootstrap module):
 
-```ts
-registry.register("acme-dcgm", ["gpu"], (config) =>
-  new AcmeDcgmProvider({ prometheusUrl: String(config?.prometheusUrl ?? "") })
-);
+```python
+registry.register(
+    "acme-dcgm",
+    ["gpu"],
+    lambda config, kind: AcmeDcgmProvider(str((config or {}).get("prometheusUrl", ""))),
+)
 ```
 
 ### 3. Point the Stack Manifest at it
 
 ```yaml
+# backend/stacks/acme.yaml
 apiVersion: kip.ai/v1
 kind: StackManifest
 metadata:
@@ -83,8 +85,7 @@ spec:
     cluster:
       type: kubernetes
       config:
-        kubeconfigPath: /var/run/secrets/kip/kubeconfig
-        # or: inCluster: true
+        kubeconfigPath: ~/.kube/config
     gpu:
       type: acme-dcgm
       config:
@@ -96,54 +97,36 @@ spec:
     remediation: { type: demo }
 ```
 
-Drop the file in `backend/stacks/` and restart. Missions keep working — only the GPU capability switches to your stack.
+Restart uvicorn — missions keep working without UI changes.
 
 ### 4. Kubernetes stub
 
-`type: kubernetes` implements `ClusterInventory` with configure hooks:
-
-| Config | Meaning |
-|--------|---------|
-| `kubeconfigPath` | Path to kubeconfig |
-| `inCluster` | Use in-cluster service account |
-| `namespace` | Default namespace scope |
-| `clusterName` | Display name |
-
-Methods are stubbed (empty returns) until you wire `@kubernetes/client-node` — see TODOs in [`providers/kubernetes/index.ts`](./src/providers/kubernetes/index.ts).
+`type: kubernetes` implements `ClusterInventory` with `kubeconfigPath` / `inCluster` hooks. Methods return empty defaults until you wire the official Kubernetes Python client (see TODOs in `kip/providers/kubernetes.py`).
 
 ## Capability contracts
 
 | Capability | Used by | Typical BYO source |
 |------------|---------|-------------------|
 | `cluster` | Kubernetes Agent | Kubernetes API |
-| `gpu` | GPU Agent | NVIDIA DCGM / DCGM exporter |
-| `observability` | Runtime / Cost | Prometheus, Mimir, Loki, Grafana |
-| `cost` | Cost Agent | OpenCost, Kubecost, custom |
-| `policy` | Policy Agent | OPA, Kyverno, custom |
-| `runtime` | Runtime Agent | vLLM / Triton / inference metrics |
-| `remediation` | Approve/Reject | kubectl / GitOps / custom actuator |
-
-## Missions
-
-| ID | Category | Ends |
-|----|----------|------|
-| `gpu-fleet` | fleet | `complete` |
-| `rag-incident` | incident | `awaiting-approval` |
-| `gpu-provision` | capacity | `awaiting-approval` |
-
-Plans live in [`src/missions/`](./src/missions/) and call capabilities only.
+| `gpu` | GPU Agent | NVIDIA DCGM |
+| `observability` | Runtime / Cost | Prometheus, Loki |
+| `cost` | Cost Agent | OpenCost / custom |
+| `policy` | Policy Agent | OPA / Kyverno |
+| `runtime` | Runtime Agent | vLLM / Triton metrics |
+| `remediation` | Approve/Reject | kubectl / GitOps |
 
 ## API
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/api/stacks` | List onboarded stacks |
+| GET | `/api/stacks` | List stacks |
 | GET | `/api/missions` | Mission catalog |
-| POST | `/api/missions` | Start run `{ missionId?, prompt?, stackId? }` |
-| GET | `/api/missions/:runId/stream` | SSE `MissionState` snapshots |
-| POST | `/api/missions/:runId/approve` | Apply pending remediation |
-| POST | `/api/missions/:runId/reject` | Reject pending remediation |
+| POST | `/api/missions` | Start run |
+| GET | `/api/missions/{runId}/stream` | SSE `MissionState` |
+| POST | `/api/missions/{runId}/approve` | Apply remediation |
+| POST | `/api/missions/{runId}/reject` | Reject remediation |
+| GET | `/health` | Health check |
 
-## Local UI without API
+## Local UI without Python
 
-Set `NEXT_PUBLIC_USE_LOCAL_SIM=true` to use the legacy client-side simulator in `lib/mission-simulator.ts`.
+Set `NEXT_PUBLIC_USE_LOCAL_SIM=true` to use the client-side simulator in `lib/mission-simulator.ts`.

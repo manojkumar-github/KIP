@@ -20,11 +20,20 @@ A mission-first, agentic AI Operations Control Center for Kubernetes, GPU, and L
 ## Quick Start
 
 ```bash
+# Terminal 1 — Python API (requires Python 3.11+)
+cd backend
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn kip.main:app --reload --port 8000
+
+# Terminal 2 — UI
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000). Next.js proxies `/api/*` to the FastAPI backend.
+
+Optional: `NEXT_PUBLIC_USE_LOCAL_SIM=true` runs the old client-side simulator (no Python needed).
 
 ## Deploy to Vercel
 
@@ -41,7 +50,10 @@ vercel
 2. Import the repo at [vercel.com/new](https://vercel.com/new)
 3. Vercel auto-detects Next.js — click Deploy
 
-No environment variables required for the demo stack. Missions run through the pluggable backend (`/api/missions`) with the built-in `demo` provider. See [`backend/README.md`](backend/README.md) to bring your own K8s/GPU stack.
+**Note:** The Python API must be hosted separately (Fly.io, Railway, Render, Cloud Run, etc.). Set `KIP_PYTHON_API_URL` on Vercel to that origin so Next.js rewrites `/api/*` correctly. For a pure static demo without Python, set `NEXT_PUBLIC_USE_LOCAL_SIM=true`.
+
+See [`backend/README.md`](backend/README.md) to bring your own K8s/GPU stack.
+
 
 ## Tech Stack
 
@@ -57,38 +69,33 @@ No environment variables required for the demo stack. Missions run through the p
 ```
 Mission Prompt
     ↓
-Next.js API + MissionOrchestrator
+Next.js (/api rewrite) → Python FastAPI
     ↓
-Capability providers (demo | kubernetes | BYO)
+MissionOrchestrator + capability providers (demo | kubernetes | BYO)
     ↓
 Specialized Agents (K8s, GPU, Runtime, Cost, Policy)
     ↓
-Structured A2UI Cards (Root Cause, Heatmap, Approval, etc.)
-    ↓
-Human Approval Gate → RemediationExecutor
+Structured A2UI Cards → Human Approval → RemediationExecutor
 ```
 
-Onboard real infrastructure via Stack Manifests and capability plugins — see [`backend/README.md`](backend/README.md).
+Onboard real infrastructure via Stack Manifests — see [`backend/README.md`](backend/README.md).
 
 ## Project Structure
 
 ```
-app/                    # Next.js app router + API routes
-backend/                # Pluggable capability framework
-  src/capabilities/     # Cluster, GPU, cost, policy, …
-  src/providers/        # demo + kubernetes stubs
-  src/missions/         # Mission plans
+app/                    # Next.js UI
+backend/                # Python FastAPI pluggable framework
+  kip/
+    capabilities.py     # Capability Protocols
+    core/               # Registry, orchestrator, run store
+    missions/           # Mission plans
+    providers/          # demo + kubernetes stubs
+    main.py             # FastAPI app
   stacks/               # Stack Manifest YAMLs
 components/
-  agents/               # Agent activity panel, timeline
-  cards/                # A2UI dynamic card renderer
-  layout/               # Shell, nav, workload list
-  mission/              # Mission workspace
 lib/
   use-mission-simulation.ts  # UI ↔ SSE API client
   mission-simulator.ts       # Optional local sim fallback
-  mock-data.ts
-  types.ts
 ```
 
 ## License

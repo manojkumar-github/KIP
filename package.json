@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:api": "cd backend && (test -x .venv/bin/uvicorn && .venv/bin/uvicorn || uvicorn) kip.main:app --reload --host 127.0.0.1 --port 8000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

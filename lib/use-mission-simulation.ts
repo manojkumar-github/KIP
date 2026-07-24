@@ -8,7 +8,13 @@ import {
 } from "./mission-simulator";
 
 const DEFAULT_STACK_ID = "demo-prod-gpu-west-2";
+/** Absolute API base (e.g. http://127.0.0.1:8000). Empty = same-origin / Next rewrites. */
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 const useLocalSim = process.env.NEXT_PUBLIC_USE_LOCAL_SIM === "true";
+
+function apiUrl(path: string): string {
+  return `${API_BASE}${path}`;
+}
 
 export function useMissionSimulation() {
   const [missionState, setMissionState] = useState<MissionState | null>(null);
@@ -54,7 +60,7 @@ export function useMissionSimulation() {
       setMissionState(null);
 
       try {
-        const res = await fetch("/api/missions", {
+        const res = await fetch(apiUrl("/api/missions"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -64,15 +70,15 @@ export function useMissionSimulation() {
         });
 
         if (!res.ok) {
-          const err = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(err.error ?? "Failed to start mission");
+          const err = (await res.json().catch(() => ({}))) as { detail?: string; error?: string };
+          throw new Error(err.detail ?? err.error ?? "Failed to start mission");
         }
 
         const { runId } = (await res.json()) as { runId: string };
         if (abortRef.current) return;
         runIdRef.current = runId;
 
-        const es = new EventSource(`/api/missions/${runId}/stream`);
+        const es = new EventSource(apiUrl(`/api/missions/${runId}/stream`));
         eventSourceRef.current = es;
 
         es.onmessage = (event) => {
@@ -141,7 +147,9 @@ export function useMissionSimulation() {
 
     const runId = runIdRef.current;
     if (!runId) return;
-    const res = await fetch(`/api/missions/${runId}/approve`, { method: "POST" });
+    const res = await fetch(apiUrl(`/api/missions/${runId}/approve`), {
+      method: "POST",
+    });
     if (!res.ok) return;
     const data = (await res.json()) as { state: MissionState };
     setMissionState(data.state);
@@ -159,7 +167,9 @@ export function useMissionSimulation() {
 
     const runId = runIdRef.current;
     if (!runId) return;
-    const res = await fetch(`/api/missions/${runId}/reject`, { method: "POST" });
+    const res = await fetch(apiUrl(`/api/missions/${runId}/reject`), {
+      method: "POST",
+    });
     if (!res.ok) return;
     const data = (await res.json()) as { state: MissionState };
     setMissionState(data.state);
