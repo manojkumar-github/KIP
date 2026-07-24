@@ -41,7 +41,7 @@ vercel
 2. Import the repo at [vercel.com/new](https://vercel.com/new)
 3. Vercel auto-detects Next.js — click Deploy
 
-No environment variables required. All data is simulated client-side.
+No environment variables required for the demo stack. Missions run through the pluggable backend (`/api/missions`) with the built-in `demo` provider. See [`backend/README.md`](backend/README.md) to bring your own K8s/GPU stack.
 
 ## Tech Stack
 
@@ -57,30 +57,38 @@ No environment variables required. All data is simulated client-side.
 ```
 Mission Prompt
     ↓
-Orchestrator (simulated)
+Next.js API + MissionOrchestrator
+    ↓
+Capability providers (demo | kubernetes | BYO)
     ↓
 Specialized Agents (K8s, GPU, Runtime, Cost, Policy)
     ↓
 Structured A2UI Cards (Root Cause, Heatmap, Approval, etc.)
     ↓
-Human Approval Gate
-    ↓
-Execute (simulated)
+Human Approval Gate → RemediationExecutor
 ```
+
+Onboard real infrastructure via Stack Manifests and capability plugins — see [`backend/README.md`](backend/README.md).
 
 ## Project Structure
 
 ```
-app/                    # Next.js app router
+app/                    # Next.js app router + API routes
+backend/                # Pluggable capability framework
+  src/capabilities/     # Cluster, GPU, cost, policy, …
+  src/providers/        # demo + kubernetes stubs
+  src/missions/         # Mission plans
+  stacks/               # Stack Manifest YAMLs
 components/
   agents/               # Agent activity panel, timeline
   cards/                # A2UI dynamic card renderer
   layout/               # Shell, nav, workload list
   mission/              # Mission workspace
 lib/
-  mission-simulator.ts  # Progressive agent simulation
-  mock-data.ts          # Sample cluster/workload data
-  types.ts              # A2UI schema types
+  use-mission-simulation.ts  # UI ↔ SSE API client
+  mission-simulator.ts       # Optional local sim fallback
+  mock-data.ts
+  types.ts
 ```
 
 ## License

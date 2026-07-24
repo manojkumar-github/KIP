@@ -1,0 +1,21 @@
+apiVersion: kip.ai/v1
+kind: StackManifest
+metadata:
+  name: demo-prod-gpu-west-2
+spec:
+  displayName: prod-gpu-west-2
+  providers:
+    cluster:
+      type: demo
+    gpu:
+      type: demo
+    observability:
+      type: demo
+    cost:
+      type: demo
+    policy:
+      type: demo
+    runtime:
+      type: demo
+    remediation:
+      type: demo
